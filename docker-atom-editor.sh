@@ -11,9 +11,9 @@ CUR_USER_GID=$(id -g)
 
 HOST_PROFILE="$HOME/.docker/$DOCKER_IMAGE"
 HOST_SSH="$HOME/.ssh/"
+HOST_MNT="/host"
 
 INTERNAL_HOME="/home/atom"
-INTERNAL_WORKDIR=$INTERNAL_HOME"/workdir"
 
 ATOM_ARGS=""
 DOCKER_ARGS=""
@@ -31,8 +31,9 @@ read -r -d '' DOCKER_RUN_PARAMS <<EOF
 --volume /tmp/.X11-unix:/tmp/.X11-unix 
 --volume $HOST_PROFILE:$INTERNAL_HOME/.atom
 --volume /usr/share/icons:/usr/share/icons:ro
---volume $PWD:$INTERNAL_WORKDIR
---workdir $INTERNAL_WORKDIR
+--volume /:$HOST_MNT
+--workdir $HOST_MNT$PWD
+--privileged
 EOF
 
 ####
@@ -79,10 +80,10 @@ readArguments() {
 		    showHelp
 		    ;;
 		    *)
-			if [ $key == "-*" ]; then
-				ATOM_ARGS=$ATOM_ARGS" $key"
+			if [[ $key == "/"* ]]; then
+				ATOM_ARGS=$ATOM_ARGS" $HOST_MNT$key"
 			else
-				ATOM_ARGS=$ATOM_ARGS" $INTERNAL_WORKDIR/$key"
+				ATOM_ARGS=$ATOM_ARGS" $key"
 			fi
 		    ;;
 		esac
@@ -95,6 +96,8 @@ readArguments() {
 ####
 
 readArguments "$@"
+
+echo $ATOM_ARGS
 
 mkdir -p $HOST_PROFILE
 execute docker run $DOCKER_RUN_PARAMS $DOCKER_ARGS $DOCKER_IMAGE $ATOM_ARGS
