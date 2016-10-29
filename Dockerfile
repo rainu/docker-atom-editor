@@ -3,7 +3,7 @@ MAINTAINER rainu <rainu@raysha.de>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV ATOM_LINK https://github.com/atom/atom/releases/download/v1.11.2/atom-amd64.deb /tmp/
+ENV ATOM_LINK https://github.com/atom/atom/releases/download/v1.11.2/atom-amd64.deb
 RUN apt-get update &&\
 	apt-get install -y --no-install-recommends git libgtk2.0-0 libnotify4 libxtst6 gconf2 gconf-service libnss3 libasound2 gvfs-bin xdg-utils &&\
 	wget -nv $ATOM_LINK -O /tmp/atom-amd64.deb &&\
