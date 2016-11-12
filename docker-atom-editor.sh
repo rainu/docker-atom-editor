@@ -19,16 +19,18 @@ ATOM_ARGS=""
 DOCKER_ARGS=""
 
 DOCKER_NAME="atom-editor-$CUR_USER_ID"
+CONTAINER_ID=$(docker ps -qf "name=$DOCKER_NAME")
 read -r -d '' DOCKER_RUN_PARAMS <<EOF
 --rm
---env HOST_USER_UID=$(id -u) 
+--name $DOCKER_NAME
+--env HOST_USER_UID=$(id -u)
 --env HOST_USER_GID=$(id -g)
---env LANG=$LANG 
---env LANGUAGE=$LANGUAGE 
+--env LANG=$LANG
+--env LANGUAGE=$LANGUAGE
 --env DISPLAY=$DISPLAY
 --env HOST_USER_UID=$CUR_USER_ID
 --env HOST_USER_GID=$CUR_USER_GID
---volume /tmp/.X11-unix:/tmp/.X11-unix 
+--volume /tmp/.X11-unix:/tmp/.X11-unix
 --volume $HOST_PROFILE:$INTERNAL_HOME/.atom
 --volume /usr/share/icons:/usr/share/icons:ro
 --volume /:$HOST_MNT
@@ -83,7 +85,7 @@ readArguments() {
 			if [[ $key == "/"* ]]; then
 				ATOM_ARGS=$ATOM_ARGS" $HOST_MNT$key"
 			else
-				ATOM_ARGS=$ATOM_ARGS" $key"
+				ATOM_ARGS=$ATOM_ARGS" $HOST_MNT/$PWD/$key"
 			fi
 		    ;;
 		esac
@@ -97,9 +99,11 @@ readArguments() {
 
 readArguments "$@"
 
-echo $ATOM_ARGS
-
-mkdir -p $HOST_PROFILE
-execute docker run $DOCKER_RUN_PARAMS $DOCKER_ARGS $DOCKER_IMAGE $ATOM_ARGS
+if [[ ! -z "$CONTAINER_ID" ]]; then
+	execute docker exec $CONTAINER_ID /bin/bash -c \"su atom -c \\\"atom -a $ATOM_ARGS\\\"\"
+else
+	mkdir -p $HOST_PROFILE
+	execute docker run $DOCKER_RUN_PARAMS $DOCKER_ARGS $DOCKER_IMAGE $ATOM_ARGS
+fi
 
 exit $?
